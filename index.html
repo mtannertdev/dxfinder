@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title>DX Finder</title>
+    <link rel="stylesheet" type="text/css" href="default.css">
+    <script src="script.js" type="text/javascript"></script>
+	<script src="jquery-3.2.1.min.js" type="text/javascript"></script>
+  </head>
+  <body>
+    <P>Filtering DX spots against DX combinations (Country, Country/Mode, Country/Band)</P>
+    <form action="uploader.php" method="post" enctype="multipart/form-data">
+      <P>Upload New Log: <input type="file" namr="upfile" ID="upfile"> <input type="submit" value="Upload" name="submit"></P>
+    </form>
+    <hr>
+    <table>
+      <tr>
+        <td>Color Key:</td>
+        <td class="lightgreen">New Entity</td>
+        <td class="orange">New Mode</td>
+        <td class="yellow">New Band</td>
+        <td class="spacer"></td>
+        <TD>Refresh in <label id="lblCountdown">30</label> seconds</td>
+      </tr>
+    </table>
+    <table>
+      <tr>
+        <td><input type="checkbox" id="10Mcb" name="10M" onclick="toggleBand(this);" checked>10m</td>
+        <td><input type="checkbox" id="12Mcb" name="12M" onclick="toggleBand(this);" checked>12m</td>
+        <td><input type="checkbox" id="15Mcb" name="15M" onclick="toggleBand(this);" checked>15m</td>
+        <td><input type="checkbox" id="17Mcb" name="17M" onclick="toggleBand(this);" checked>17m</td>
+        <td><input type="checkbox" id="20Mcb" name="20M" onclick="toggleBand(this);" checked>20m</td>
+        <td><input type="checkbox" id="30Mcb" name="30M" onclick="toggleBand(this);" checked>30m</td>
+        <td><input type="checkbox" id="40Mcb" name="40M" onclick="toggleBand(this);" checked>40m</td>
+        <td><input type="checkbox" id="80Mcb" name="80M" onclick="toggleBand(this);" checked>80m</td>
+        <td><input type="checkbox" id="160Mcb" name="160M" onclick="toggleBand(this);" checked>160m</td>
+      </tr>
+    </table>
+    <div id="divSpots">
+    </div>
+  </body>
+</html>
