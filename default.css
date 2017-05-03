@@ -29,6 +29,10 @@ td {
 	background-color: orange;
 }
 
+.red {
+	color: red;
+}
+
 .spacer {
 	width: 40px;
 }

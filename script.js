@@ -1,14 +1,53 @@
 var timeLeft = 0;
 var timerId = setInterval(countdown, 1000);
 var spotArray = [];
-var RELOAD_INTERVAL = 1000;
+var HASH_SECRET = "a1f9296dfb46c852d811743cadd9fc657aa0a32b9c8cfa77856efd1833528479";
+var RELOAD_INTERVAL = 30;
+var workedEntities = [];
 
+function loadPage() {
+	//console.log("Fired Page Load Function");
+    var x = document.getElementById('ErrorPIN');
+    x.style.display = 'none';
+	var y = document.getElementById('NoLog');
+    y.style.display = 'Block';
+	var z = document.getElementById('InputPIN');
+    z.style.display = 'none';
+}
+
+function showPinField() {
+	var x = document.getElementById('InputPIN');
+	x.style.display = 'Block';
+}
+
+function loadLog() {
+	var sha256 = new jsSHA('SHA-256', "TEXT");
+	sha256.update(HASH_SECRET + document.getElementById('txtPIN').value.trim());
+	var hash = sha256.getHash("HEX");
+	$.get( "logs/" + hash, function( data ) {
+		workedEntities = JSON.parse(data);
+		updateTable();
+		
+		var w = document.getElementById('ErrorPIN');
+		w.style.display = 'none';
+		var x = document.getElementById('hrline');
+		x.style.display = 'none';
+		var y = document.getElementById('NoLog');
+		y.style.display = 'none';
+		var z = document.getElementById('InputPIN');
+		z.style.display = 'none';
+	}).fail( function() {
+		var w = document.getElementById('ErrorPIN');
+		w.style.display = 'Block';
+		
+	});
+}
 
 function countdown() {
-	//console.log("Timer Fired: " + timeLeft);
 	if (timeLeft == 0) {		
 		$.get( "http://www.dxsummit.fi/api/v1/spots", function( data ) {
-			document.getElementById("divSpots").innerHTML = updateTable(data);
+			updateSpotArray(data);
+			updateTable();
 		});
 		
 		timeLeft = RELOAD_INTERVAL;
@@ -16,9 +55,29 @@ function countdown() {
 	document.getElementById("lblCountdown").innerHTML = timeLeft;
 	timeLeft--;
 }
-function updateTable(json_data) {
-	//console.log("Parsing JSON");
-	//console.log(json_data);
+
+function updateSpotArray(json_data) {
+	for (i = 0; i < json_data.length; i++) {
+		if (!(isIDinSpotArray(json_data[i].id))) {
+			if (json_data[i].frequency.toString().includes(".") == false) {
+				json_data[i].frequency = json_data[i].frequency.toString() + ".0";
+			}
+			json_data[i].band = getBandFromFreq(json_data[i].frequency);
+			json_data[i].mode = getModeFromFreq(json_data[i].frequency);
+			json_data[i].datetime = parseInt(json_data[i].time.replace("T", "").replace("-","").replace("-","").replace(":","").replace(":",""));
+			json_data[i].time = json_data[i].time.substring(11);
+			if (json_data[i].info == null) {
+				json_data[i].info = "";
+			}
+			json_data[i].country = getCountryFromCall(json_data[i].dx_call);
+			spotArray.push(json_data[i]);
+		}
+	}
+	spotArray.sort(sortByDateTime);
+}
+
+function updateTable() {
+	//console.log("LENGTH: " + spotArray.length);
 	var result = "";
 	result += "<table>";
 	result += "<tr>";
@@ -26,123 +85,182 @@ function updateTable(json_data) {
 	result += "<th>Frequency</th>";
 	result += "<th>Band</th>";
 	result += "<th>DX</th>";
-	//result += "<th>Country</th>";
-	//result += "<th>Mode</th>";
+	result += "<th>Country</th>";
+	result += "<th>Mode</th>";
 	result += "<th>Time</th>";
 	result += "<th>Info</th>";
 	result += "</tr>";
-	for (i = 0; i < json_data.length; i++) {
-		if (!(json_data[i] in spotArray)) {
-			//console.log("Adding " + json_data[i].id);
-			if (json_data[i].frequency.toString().includes(".") == false) {
-				json_data[i].frequency = json_data[i].frequency.toString() + ".0";
-			}
-			spotArray.push(json_data[i]);
-			console.log("Added: " + json_data[i].id);
-		}
-		//console.log(json_data[i]);
-	}
-	spotArray.sort();
 	for (i = 0; i < spotArray.length; i++) {
-		band = getBandFromFreq(spotArray[i].frequency);
-		//console.log(band);
-		if (band != "OOB") {
-			//console.log(spotArray[i]);
-			//console.log(JSON.stringify(spotArray[i]));
-			//console.log("Printing" + spotArray[i].id);
-			result += "<tr>";
-			result += "<td>" + spotArray[i].de_call + "</td>";
-			result += "<td>" + spotArray[i].frequency + "</td>";
-			result += "<td>" + band + "</td>";
-			result += "<td>" + spotArray[i].dx_call + "</td>";
-			//result += "<td>" + spotArray[i].country + "</td>";
-			//result += "<td>" + spotArray[i].mode + "</td>";
-			result += "<td>" + spotArray[i].time.substring(11); + "</td>";
-			result += "<td>" + spotArray[i].info + "</td>";
-			result += "</tr>";
+		if (spotArray[i].band != "OOB") {
+			if (document.getElementById("10Mcb").checked && spotArray[i].band == "10M" || 
+			    document.getElementById("12Mcb").checked && spotArray[i].band == "12M" || 
+				document.getElementById("15Mcb").checked && spotArray[i].band == "15M" || 
+				document.getElementById("17Mcb").checked && spotArray[i].band == "17M" || 
+				document.getElementById("20Mcb").checked && spotArray[i].band == "20M" || 
+				document.getElementById("30Mcb").checked && spotArray[i].band == "30M" || 
+				document.getElementById("40Mcb").checked && spotArray[i].band == "40M" || 
+				document.getElementById("80Mcb").checked && spotArray[i].band == "80M"|| 
+				document.getElementById("160Mcb").checked && spotArray[i].band == "160M")
+			if (typeof workedEntities[spotArray[i].country] == "undefined") {
+				result += "<tr class='lightgreen'>";
+				result += "<td>" + spotArray[i].de_call + "</td>";
+				result += "<td>" + spotArray[i].frequency + "</td>";
+				result += "<td>" + spotArray[i].band + "</td>";
+				result += "<td>" + spotArray[i].dx_call + "</td>";
+				result += "<td>" + spotArray[i].country + "</td>";
+				result += "<td>" + spotArray[i].mode + "</td>";
+				result += "<td>" + spotArray[i].time; + "</td>";
+				result += "<td>" + spotArray[i].info + "</td>";
+				result += "</tr>";
+			}
+			else if (typeof workedEntities[spotArray[i].country + "_" + spotArray[i].mode] == "undefined") {
+				result += "<tr class='orange'>";
+				result += "<td>" + spotArray[i].de_call + "</td>";
+				result += "<td>" + spotArray[i].frequency + "</td>";
+				result += "<td>" + spotArray[i].band + "</td>";
+				result += "<td>" + spotArray[i].dx_call + "</td>";
+				result += "<td>" + spotArray[i].country + "</td>";
+				result += "<td>" + spotArray[i].mode + "</td>";
+				result += "<td>" + spotArray[i].time; + "</td>";
+				result += "<td>" + spotArray[i].info + "</td>";
+				result += "</tr>";
+			}
+			else if (typeof workedEntities[spotArray[i].country + "_" + spotArray[i].band] == "undefined") {
+				result += "<tr class='yellow'>";
+				result += "<td>" + spotArray[i].de_call + "</td>";
+				result += "<td>" + spotArray[i].frequency + "</td>";
+				result += "<td>" + spotArray[i].band + "</td>";
+				result += "<td>" + spotArray[i].dx_call + "</td>";
+				result += "<td>" + spotArray[i].country + "</td>";
+				result += "<td>" + spotArray[i].mode + "</td>";
+				result += "<td>" + spotArray[i].time; + "</td>";
+				result += "<td>" + spotArray[i].info + "</td>";
+				result += "</tr>";
+			}
 		}
 	}
 	result += "</table>";
-	//console.log(result);
-	return result;
+	document.getElementById("divSpots").innerHTML = result;
 }
 
-function sortSpotsByID(){
-	newSpotArray = [];
-	currentMaxID = 0;
-
-	for (i = 0; i < spotArray.length; i++) {
-		{
+function isComboInWorkedEntities(combo) {
+	for (j = 0; j < workedEntities.length; j++) {
+		if (workedEntities[j].id == id) {
+			return true;
 		}
 	}
-	
+	return false;
 }
 
-
-function zzz() {
-	console.log("Checking localStorage");
-	var localval = localStorage.getItem("10M_checked");
-	console.log("Local Value for 10m: " + $localval);
-	if (localval == false) {
-		document.getElementById("10Mcb").checked = false;
-		console.log(localStorage.getItem("Read: 10M_checked"));
+function isIDinSpotArray(id) {
+	for (j = 0; j < spotArray.length; j++) {
+		if (spotArray[j].id == id) {
+			return true;
+		}
 	}
-	if (localStorage.getItem("12M_checked") == false) {
-		document.getElementById("12Mcb").checked = false;
-		console.log(localStorage.getItem("Read: 12M_checked"));
-	}
-	if (localStorage.getItem("15M_checked") == "false") {
-		document.getElementById("15Mcb").checked = false;
-	}
-	if (localStorage.getItem("17M_checked") == "false") {
-		document.getElementById("17Mcb").checked = false;
-	}
-	if (localStorage.getItem("20M_checked") == "false") {
-		document.getElementById("20Mcb").checked = false;
-	}
-	if (localStorage.getItem("30M_checked") == "false") {
-		document.getElementById("30Mcb").checked = false;
-	}
-	if (localStorage.getItem("40M_checked") == "false") {
-		document.getElementById("40Mcb").checked = false;
-	}
-	if (localStorage.getItem("80M_checked") == "false") {
-		document.getElementById("80Mcb").checked = false;
-	}
-	if (localStorage.getItem("160M_checked") == "false") {
-		document.getElementById("160Mcb").checked = false;
-	}
+	return false;
 }
 
-function getBandFromFreq($freq) {
+function sortByDateTime(a, b) {
+	return b.datetime - a.datetime;
+}
+
+function getBandFromFreq(freq) {
 	//console.log("Band Check: " + $freq);
 	var re10m = new RegExp('^2[8-9]...[.].$');
-	if (re10m.test($freq) == true) { return "10M"; }
+	if (re10m.test(freq) == true) { return "10M"; }
 	var re12m = new RegExp('^24[8-9]..[.].$');
-	if (re12m.test($freq) == true) { return "12M"; }
+	if (re12m.test(freq) == true) { return "12M"; }
 	var re15m = new RegExp('^21[0-4]..[.].$');
-	if (re15m.test($freq) == true) { return "15M"; }
+	if (re15m.test(freq) == true) { return "15M"; }
 	var re17m = new RegExp('^18[0-1]..[.].$');
-	if (re17m.test($freq) == true) { return "17M"; }
+	if (re17m.test(freq) == true) { return "17M"; }
 	var re20m = new RegExp('^14[0-3]..[.].$');
-	if (re20m.test($freq) == true) { return "20M"; }
+	if (re20m.test(freq) == true) { return "20M"; }
 	var re30m = new RegExp('^101[0-5].[.].$');
-	if (re30m.test($freq) == true) { return "30M"; }
+	if (re30m.test(freq) == true) { return "30M"; }
 	var re40m = new RegExp('^7[0-3]..[.].$');
-	if (re40m.test($freq) == true) { return "40M"; }
+	if (re40m.test(freq) == true) { return "40M"; }
 	var re80m = new RegExp('^3[5-9]..[.].$');
-	if (re80m.test($freq) == true) { return "80M"; }
+	if (re80m.test(freq) == true) { return "80M"; }
 	var re160m = new RegExp('^1[8-9]..[.].$');
-	if (re160m.test($freq) == true) { return "160M"; }
+	if (re160m.test(freq) == true) { return "160M"; }
 	return "OOB";
 }
 
-function getModeFromFreq($freq) {
-	
+function getModeFromFreq(freq) {
+	//console.log("Mode Check: " + freq);
+	var re10m_1 = new RegExp('^280[0-6].[.].$');
+	if (re10m_1.test(freq) == true) { return "CW"; }
+	var re10m_2 = new RegExp('^280[7-9].[.].$');
+	if (re10m_2.test(freq) == true) { return "DIGI"; }
+	var re10m_3 = new RegExp('^282..[.].$');
+	if (re10m_3.test(freq) == true) { return "DIGI"; }
+	var re10m_4 = new RegExp('^28[3-9]..[.].$');
+	if (re10m_4.test(freq) == true) { return "PHONE"; }
+	var re10m_5 = new RegExp('^29...[.].$');
+	if (re10m_5.test(freq) == true) { return "PHONE"; }
+	var re12m_1 = new RegExp('^248..[.].$');
+	if (re12m_1.test(freq) == true) { return "CW"; }
+	var re12m_2 = new RegExp('^249[0-1].[.].$');
+	if (re12m_2.test(freq) == true) { return "CW"; }
+	var re12m_3 = new RegExp('^2492.[.].$');
+	if (re12m_3.test(freq) == true) { return "DIGI"; }
+	var re12m_4 = new RegExp('^249[3-8].[.].$');
+	if (re12m_4.test(freq) == true) { return "PHONE"; }
+	var re15m_1 = new RegExp('^210[0-6].[.].$');
+	if (re15m_1.test(freq) == true) { return "CW"; }
+	var re15m_2 = new RegExp('^210[7-9].[.].$');
+	if (re15m_2.test(freq) == true) { return "DIGI"; }
+	var re15m_3 = new RegExp('^21[2-4]..[.].$');
+	if (re15m_3.test(freq) == true) { return "PHONE"; }
+	var re17m_1 = new RegExp('^180..[.].$');
+	if (re17m_1.test(freq) == true) { return "CW"; }
+	var re17m_2 = new RegExp('^1810.[.].$');
+	if (re17m_2.test(freq) == true) { return "DIGI"; }
+	var re17m_3 = new RegExp('^181[1-6].[.].$');
+	if (re17m_3.test(freq) == true) { return "PHONE"; }
+	var re20m_1 = new RegExp('^140[0-6].[.].$');
+	if (re20m_1.test(freq) == true) { return "CW"; }
+	var re20m_2 = new RegExp('^140[7-9].[.].$');
+	if (re20m_2.test(freq) == true) { return "DIGI"; }
+	var re20m_3 = new RegExp('^141[0-4].[.].$');
+	if (re20m_3.test(freq) == true) { return "DIGI"; }
+	var re20m_4 = new RegExp('^141[5-9].[.].$');
+	if (re20m_4.test(freq) == true) { return "PHONE"; }
+	var re20m_5 = new RegExp('^14[2-3]..[.].$');
+	if (re20m_5.test(freq) == true) { return "PHONE"; }
+	var re30m_1 = new RegExp('^101[0-2].[.].$');
+	if (re30m_1.test(freq) == true) { return "CW"; }
+	var re30m_2 = new RegExp('^101[3-5].[.].$');
+	if (re30m_2.test(freq) == true) { return "DIGI"; }
+	var re40m_1 = new RegExp('^70[0-6].[.].$');
+	if (re40m_1.test(freq) == true) { return "CW"; }
+	var re40m_2 = new RegExp('^70[7-9].[.].$');
+	if (re40m_2.test(freq) == true) { return "DIGI"; }
+	var re40m_3 = new RegExp('^71[0-1].[.].$');
+	if (re40m_3.test(freq) == true) { return "DIGI"; }
+	var re40m_4 = new RegExp('^712[0-4][.].$');
+	if (re40m_4.test(freq) == true) { return "DIGI"; }
+	var re40m_5 = new RegExp('^712[5-9][.].$');
+	if (re40m_5.test(freq) == true) { return "PHONE"; }
+	var re40m_6 = new RegExp('^71[3-9].[.].$');
+	if (re40m_6.test(freq) == true) { return "PHONE"; }
+	var re40m_7 = new RegExp('^7[2-3]..[.].$');
+	if (re40m_7.test(freq) == true) { return "PHONE"; }
+	var re80m_1 = new RegExp('^35[0-6].[.].$');
+	if (re80m_1.test(freq) == true) { return "CW"; }
+	var re80m_2 = new RegExp('^357[0-5][.].$');
+	if (re80m_2.test(freq) == true) { return "CW"; }
+	var re80m_3 = new RegExp('^357[6-9][.].$');
+	if (re80m_3.test(freq) == true) { return "DIGI"; }
+	var re80m_4 = new RegExp('^35[8-9].[.].$');
+	if (re80m_4.test(freq) == true) { return "DIGI"; }
+	var re80m_5 = new RegExp('^3[6-9]..[.].$');
+	if (re80m_5.test(freq) == true) { return "PHONE"; }
+	return "N/A";
 }
 
 function toggleBand(cb) {
-	localStorage.setItem(cb.checked, cb.name + "_checked");
-	console.log("Event: " + cb.name + "_checked");
-	//alert(cb.checked + "  /  " + cb.name + "_checked");
+	updateTable();
 }
