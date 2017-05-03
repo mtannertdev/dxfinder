@@ -91,22 +91,21 @@ function updateTable() {
 	result += "<th>Info</th>";
 	result += "</tr>";
 	for (i = 0; i < spotArray.length; i++) {
-		if (spotArray[i].band != "OOB") {
-			if (document.getElementById("10Mcb").checked && spotArray[i].band == "10M" || 
-			    document.getElementById("12Mcb").checked && spotArray[i].band == "12M" || 
-				document.getElementById("15Mcb").checked && spotArray[i].band == "15M" || 
-				document.getElementById("17Mcb").checked && spotArray[i].band == "17M" || 
-				document.getElementById("20Mcb").checked && spotArray[i].band == "20M" || 
-				document.getElementById("30Mcb").checked && spotArray[i].band == "30M" || 
-				document.getElementById("40Mcb").checked && spotArray[i].band == "40M" || 
-				document.getElementById("80Mcb").checked && spotArray[i].band == "80M"|| 
-				document.getElementById("160Mcb").checked && spotArray[i].band == "160M")
+		if (document.getElementById("10Mcb").checked && spotArray[i].band == "10M" || 
+			document.getElementById("12Mcb").checked && spotArray[i].band == "12M" || 
+			document.getElementById("15Mcb").checked && spotArray[i].band == "15M" || 
+			document.getElementById("17Mcb").checked && spotArray[i].band == "17M" || 
+			document.getElementById("20Mcb").checked && spotArray[i].band == "20M" || 
+			document.getElementById("30Mcb").checked && spotArray[i].band == "30M" || 
+			document.getElementById("40Mcb").checked && spotArray[i].band == "40M" || 
+			document.getElementById("80Mcb").checked && spotArray[i].band == "80M"|| 
+			document.getElementById("160Mcb").checked && spotArray[i].band == "160M") {
 			if (typeof workedEntities[spotArray[i].country] == "undefined") {
 				result += "<tr class='lightgreen'>";
 				result += "<td>" + spotArray[i].de_call + "</td>";
 				result += "<td>" + spotArray[i].frequency + "</td>";
 				result += "<td>" + spotArray[i].band + "</td>";
-				result += "<td>" + spotArray[i].dx_call + "</td>";
+				result += "<td><a href='https://www.qrz.com/db/" + spotArray[i].dx_call + "'>" + spotArray[i].dx_call + "<a/></td>";
 				result += "<td>" + spotArray[i].country + "</td>";
 				result += "<td>" + spotArray[i].mode + "</td>";
 				result += "<td>" + spotArray[i].time; + "</td>";
@@ -118,7 +117,7 @@ function updateTable() {
 				result += "<td>" + spotArray[i].de_call + "</td>";
 				result += "<td>" + spotArray[i].frequency + "</td>";
 				result += "<td>" + spotArray[i].band + "</td>";
-				result += "<td>" + spotArray[i].dx_call + "</td>";
+				result += "<td><a href='https://www.qrz.com/db/" + spotArray[i].dx_call + "'>" + spotArray[i].dx_call + "<a/></td>";
 				result += "<td>" + spotArray[i].country + "</td>";
 				result += "<td>" + spotArray[i].mode + "</td>";
 				result += "<td>" + spotArray[i].time; + "</td>";
@@ -130,7 +129,7 @@ function updateTable() {
 				result += "<td>" + spotArray[i].de_call + "</td>";
 				result += "<td>" + spotArray[i].frequency + "</td>";
 				result += "<td>" + spotArray[i].band + "</td>";
-				result += "<td>" + spotArray[i].dx_call + "</td>";
+				result += "<td><a href='https://www.qrz.com/db/" + spotArray[i].dx_call + "'>" + spotArray[i].dx_call + "<a/></td>";
 				result += "<td>" + spotArray[i].country + "</td>";
 				result += "<td>" + spotArray[i].mode + "</td>";
 				result += "<td>" + spotArray[i].time; + "</td>";

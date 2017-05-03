@@ -60,7 +60,7 @@
 		foreach ($log_array as $entry)
 		{
 			$entry = trim($entry);
-			if (!(strpos($entry, "<QSL_RCVD:") === false))
+			if (!(strpos($entry, "<QSL_RCVD:1>Y") === false))
             {
 				$COUNTRY = "";
 				$CALL = "";
