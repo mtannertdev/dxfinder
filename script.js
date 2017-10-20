@@ -74,6 +74,13 @@ function updateSpotArray(json_data) {
 		}
 	}
 	spotArray.sort(sortByDateTime);
+	
+	for (i = spotArray.length - 1; i > -1; i--) {
+		var date_spot = new Date(spotArray[i].datetime + "Z");
+		if (Date.now() - date_spot.getTime() > 1800000) 
+			spotArray.splice(i, 1);
+		}
+	}
 }
 
 function updateTable() {
